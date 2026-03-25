@@ -3,7 +3,7 @@
 This document consolidates all technical endpoints, repository details, and system specifications for the final project submission.
 
 ## 🔗 Project Fundamentals
-- **GitHub Repository**: [Your Repository Link Here]
+- **GitHub Repository**: [\[eventzen-capstone\]](https://github.com/rohitpadile/eventzen-capstone)
 - **Deployment Status**: Fully Dockerized (Single-command deployment)
 - **Hybrid Architecture**: Spring Boot (Core) + Node.js (Support Microservice)
 
