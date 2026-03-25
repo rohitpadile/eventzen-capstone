@@ -1,0 +1,78 @@
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: eventzen-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eventzen_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - eventzen-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
+
+  spring-backend:
+    build: ./eventzen
+    container_name: eventzen-spring-core
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/eventzen_db?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      mysql-db:
+        condition: service_healthy # Waits for DB to actually be ready
+    networks:
+      - eventzen-network
+
+  node-service:
+    build: ./eventzen-support-service
+    container_name: eventzen-node-support
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=mysql-db
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_NAME=eventzen_db
+      - JWT_SECRET=7A25432A462D4A614E645267556B58703273357638792F423F4528482B4D6251
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    networks:
+      - eventzen-network
+
+  react-frontend:
+    build: 
+      context: ./eventzenFrontend
+      # Pass API URLs if your Dockerfile handles them
+      args:
+        - REACT_APP_API_URL=http://localhost:8080 
+    container_name: eventzen-react-ui
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - spring-backend
+      - node-service
+    networks:
+      - eventzen-network
+
+networks:
+  eventzen-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
